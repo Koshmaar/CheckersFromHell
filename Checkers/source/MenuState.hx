@@ -20,6 +20,8 @@ class MenuState extends FlxState
 		
 		add(new FlxText(100, 100, 100, "Hello, World!", 12));
 		
+		Reg.board.dostuff();
+		
 	}
 	
 	function SetupMouseCursor():Void
