@@ -1,37 +1,112 @@
 package;
 import flixel.FlxSprite;
 import flixel.util.FlxPoint;
+import flixel.util.FlxRandom;
 import haxe.ds.Vector;
 
 class Board 
 {
+	// total number of white/black checkers on board
+	public static var checkers_x : Int = 8; 
+	public static var checkers_y : Int = 10;
 	
-	public static var size_x : Int = 6;
-	public static var size_y : Int = 6;
+	public static var checker_physical_size : Int = 58;
+		
+	// 0 black  1 red
+	public function GetPieceType( type : Int ) : Int
+	{
+		if (type == 0)
+			return FlxRandom.intRanged(0, 3);
+		else
+			return FlxRandom.intRanged(4, 7);
+	}
 
+	// left top corner: (x: 75 | y: 90)
+	// right bottom corner:  (x: 533 | y: 660
+	// width/height of one checker board = 55
+
+	// 608  top of bottomest row
+	
+	// board left top physical 
+	public static var board_physical_pos : FlxPoint = new FlxPoint(72, 86);
+	
+
+	public var the : Array< Array<Checker> >;
+	
+	
 	public function new() 
 	{
-	
-	/*	var v2d = Vector2D.create(3,5);
-
-        v2d[0][0] = "Top Left";
-        v2d[2][4] = "Bottom Right";
-
-        trace (v2d);*/
-		
 	}
 	
-	
-	public function dostuff()
+	public function Init()
 	{
-		var r = new Representation();
+		//var r = new Representation();
 		
-		//trace( r.board );
+		the = Array2D.createChecker(checkers_x, checkers_y);
+		var legal : Bool = true;
+		
+		for (j in 0...checkers_y)
+		{
+			for (i in 0...checkers_x)
+			{
+				var c = new Checker();
+				c.pos_x = i;
+				c.pos_y = j;
+				c.x = Board.board_physical_pos.x + i * checker_physical_size ;
+				c.y = Board.board_physical_pos.y + j * checker_physical_size ;
+				
+				c.legal = legal;
+				legal = !legal;
+				
+				c.Init();
+				
+				the[i][j] = c;
+				
+			}
+			
+			legal = !legal;
+		}
+	}
+	
+	public function CheckPiecesPositions()
+	{
+		for (_p in Reg.pieces_group )
+		{
+			var p : Piece = _p;
+			
+			var grid_x : Int = (p.x - board_physical_pos.x ) / checkers_x;
+			var grid_y : Int = (p.y - board_physical_pos.y ) / checkers_y;
+			
+			
+			
+		}
 		
 	}
+	
+	public function draw() : Void
+	{
+		
+		#if debug
+		for (i in 0...checkers_x)
+		{
+			for (j in 0...checkers_y)
+			{
+				the[i][j].draw();
+				
+			}
+			
+		}
+		
+		#end
+		
+	}
+	
 	
 }
 
+
+
+/*
 class Representation
 {
 	
@@ -44,11 +119,11 @@ class Representation
 	public var board : Array< Array<Int> >;
 
 }
-
+*/
 
 class Array2D
 {
-    public static function createInt(w:Int, h:Int)
+    public static function createChecker(w:Int, h:Int)
     {
         var a = [];
         for (x in 0...w)
@@ -56,7 +131,7 @@ class Array2D
             a[x] = [];
             for (y in 0...h)
             {
-                a[x][y] = 0;
+                a[x][y] = null;
             }
         }
         return a;

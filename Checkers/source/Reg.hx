@@ -1,5 +1,6 @@
 package;
 
+import flixel.group.FlxTypedGroup;
 import flixel.util.FlxSave;
 
 
@@ -8,6 +9,8 @@ class Reg
 	
 	
 	public static var board : Board = new Board();
+	
+	public static var pieces_group : FlxTypedGroup<Piece>;
 	
 	//public static var levels:Array<Dynamic> = [];
 	

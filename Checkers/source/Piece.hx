@@ -18,27 +18,31 @@ class Piece extends FlxNapeSprite
 {
 	
 	// x and y for game pos are in FlxSprite
-	public var posBoard : FlxPoint; // 0 based
+	public var pos_board : FlxPoint = new FlxPoint(); // 0 based
 	
 	
-	public var player : Int;  // 0 or 1
+	public var player : Int = 0;  // 0 for black, 1 for red
 	
 
-	public function new(X:Int, Y:Int, OffsetX:Int, OffsetY:Int):Void
+	public function new(X: Float, Y: Float, type : Int):Void
 	{
-		super(X + OffsetX, Y + OffsetY);
+		super(X , Y );
 		loadGraphic("assets/images/pieces.png", true, 44, 44);
 		
 	
-		animation.frameIndex = FlxRandom.intRanged(0, 6);
-		// So the card still looks smooth when rotated
+		//animation.frameIndex = FlxRandom.intRanged(0, 6);
+		animation.frameIndex = type;
+		
+		if (type >= 4)
+			player = 1;
+		
 		antialiasing = true;
 		setDrag(0.3, 0.3);
 	
 		//createRectangularBody(79, 123);
-		createCircularBody(16);
+		createCircularBody(18);
 		
-		// To make sure cards don't interact with each other
+		// To make pieces don't interact with each other
 		//body.setShapeFilters(new InteractionFilter(2, ~2));
 		
 		// Setup the mouse events
@@ -49,11 +53,11 @@ class Piece extends FlxNapeSprite
 	{
 		var body:Body = cast(Sprite, FlxNapeSprite).body;
 		
-		PlayState.cardJoint = new DistanceJoint(FlxNapeState.space.world, body, Vec2.weak(FlxG.mouse.x, FlxG.mouse.y), body.worldPointToLocal(Vec2.weak(FlxG.mouse.x, FlxG.mouse.y)), 0, 0);
-		PlayState.cardJoint.stiff = false;
-		PlayState.cardJoint.damping = 0.1;
-		PlayState.cardJoint.frequency = 5;
-		PlayState.cardJoint.space = FlxNapeState.space;
+		PlayState.piece_mouse_joint = new DistanceJoint(FlxNapeState.space.world, body, Vec2.weak(FlxG.mouse.x, FlxG.mouse.y), body.worldPointToLocal(Vec2.weak(FlxG.mouse.x, FlxG.mouse.y)), 0, 0);
+		PlayState.piece_mouse_joint.stiff = false;
+		PlayState.piece_mouse_joint.damping = 0.1;
+		PlayState.piece_mouse_joint.frequency = 5;
+		PlayState.piece_mouse_joint.space = FlxNapeState.space;
 	}
 	
 	
@@ -67,13 +71,7 @@ class Piece extends FlxNapeSprite
 		color = 0xDFDFDF;
 	}
 	
-	//private function pickCard(Tween:FlxTween):Void
-	//{
-		//// Choose a random card from the first 52 cards on the spritesheet 
-		//// - excluding those who have already been picked!
-		//animation.frameIndex = FlxRandom.intRanged(0, 51);
-	//}
-	
+
 	override public function destroy():Void 
 	{
 		// Make sure that this object is removed from the MouseEventManager for GC
