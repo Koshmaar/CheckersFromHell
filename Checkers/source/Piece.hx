@@ -22,9 +22,13 @@ class Piece extends FlxNapeSprite
 	public var pos_board_y : Int;
 	
 	public var player : Int = 0;  // 0 for black, 1 for red
+	public var is_damka : Bool;
 	
 	public var dragged : Bool;
 	public var prev_pos : FlxPoint;
+	
+	public var prev_pos_board_x : Int;
+	public var prev_pos_board_y : Int;
 	
 
 	public function new(X: Float, Y: Float, type : Int):Void
@@ -32,7 +36,7 @@ class Piece extends FlxNapeSprite
 		super(X , Y );
 		loadGraphic("assets/images/pieces.png", true, 44, 44);
 		
-	
+		is_damka = false;
 		//animation.frameIndex = FlxRandom.intRanged(0, 6);
 		animation.frameIndex = type;
 		
@@ -58,7 +62,9 @@ class Piece extends FlxNapeSprite
 	{
 		prev_pos.x = x;
 		prev_pos.y = y;
-		trace("-- Start Drag");
+		prev_pos_board_x = pos_board_x;
+		prev_pos_board_y = pos_board_y;
+		trace("");
 	
 		var body:Body = cast(Sprite, FlxNapeSprite).body;
 		
@@ -81,6 +87,14 @@ class Piece extends FlxNapeSprite
 		}
 		
 		Reg.pieces_group.PutOnTop( this );
+	}
+	
+	public function IllegalMove()
+	{
+		x = prev_pos.x;
+		y = prev_pos.y;
+		body.position.x = x + 22;
+		body.position.y = y + 22;
 	}
 	
 	
@@ -125,6 +139,23 @@ class Piece extends FlxNapeSprite
 		
 		pos_board_x = grid_x;
 		pos_board_y = grid_y;
+		
+		
+	}
+	
+	public function CheckDamka()
+	{
+		if (is_damka == false && ((player == 0 && pos_board_y == Board.checkers_y-1) || 
+			(player == 1 && pos_board_y == 0)) )
+		{
+			trace("promoted to damka");
+			is_damka = true;
+			
+			if (player == 0)
+				animation.frameIndex = 3;
+			else
+				animation.frameIndex = 7;
+		}
 	}
 	
 

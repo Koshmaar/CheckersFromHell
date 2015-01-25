@@ -16,9 +16,9 @@ class Board
 	public function GetPieceType( type : Int ) : Int
 	{
 		if (type == 0)
-			return FlxRandom.intRanged(0, 3);
+			return FlxRandom.intRanged(0, 2);
 		else
-			return FlxRandom.intRanged(4, 7);
+			return FlxRandom.intRanged(4, 6);
 	}
 
 	// left top corner: (x: 75 | y: 90)
@@ -77,11 +77,35 @@ class Board
 		for (_p in Reg.pieces_group )
 		{
 			var p : Piece = _p;
-			
-			p.UpdateBoardPos();
-			
+			if (p.alive)
+				p.UpdateBoardPos();
 		}
-		
+	}
+	
+	public function GetPieceOnChecker( x : Int, y : Int ) : Piece
+	{
+		for (_p in Reg.pieces_group )
+		{
+			var p : Piece = _p;
+			
+			if (p.pos_board_x == x && p.pos_board_y == y && p.alive)
+				return p;
+		}
+		return null;
+	}
+	
+	public function IsOtherOnChecker( x : Int, y : Int, me : Piece ) : Piece
+	{
+		for (_p in Reg.pieces_group )
+		{
+			var p : Piece = _p;
+			if (p == me) 
+				continue;
+			
+			if (p.pos_board_x == x && p.pos_board_y == y && p.alive)
+				return p;
+		}
+		return null;
 	}
 	
 	public function draw() : Void

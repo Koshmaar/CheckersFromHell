@@ -5,12 +5,17 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.group.FlxTypedGroup;
 import flixel.plugin.MouseEventManager;
+import flixel.text.FlxText;
+import flixel.util.FlxColor;
 import flixel.util.FlxPoint;
 import flixel.util.FlxRandom;
 import flixel.util.FlxTimer;
 import nape.constraint.DistanceJoint;
+import nape.dynamics.InteractionFilter;
 import nape.geom.Vec2;
 import flixel.util.FlxMath;
+import openfl.display.StageAlign;
+import openfl.display.StageScaleMode;
 
 
 class PlayState extends FlxNapeState
@@ -18,6 +23,11 @@ class PlayState extends FlxNapeState
 	public static var piece_mouse_joint:DistanceJoint;
 	
 	//private var _fan:FlxSprite;
+	
+	public var text : FlxText;
+	
+	public var moves_black : FlxText;
+	public var moves_red : FlxText;
 	
 	override public function create():Void 
 	{
@@ -41,12 +51,38 @@ class PlayState extends FlxNapeState
 		_fan.angularVelocity = 10;
 		add(_fan);*/
 		
-		new FlxTimer(16.0, ChangeRules, 0);
+		FlxG.stage.scaleMode = StageScaleMode.SHOW_ALL;
+		FlxG.stage.align = StageAlign.TOP; // centers it horizontally
+		//FlxG.stage.scaleMode = StageScaleMode.SHOW_ALL
+		
+		FlxG.camera.antialiasing = true;
+		
+		
+		text = new FlxText(20, FlxG.height - 70, FlxG.width-30, "What Do We Do Now ?");
+		text.setFormat("assets/cheri.ttf", 38, FlxColor.BLACK, "center");
+		//text.setBorderStyle(FlxText.BORDER_OUTLINE, FlxColor.WHITE, 2);
+		//text.addFormat(new FlxTextFormat(0xE6E600, false, false, 0xFF8000, 0, -1));
+		add(text);
+		
+		
+		moves_black = new FlxText(FlxG.width - 40, 90, 40, "0");
+		moves_black.setFormat("assets/cheri.ttf", 32, FlxColor.BLACK, "center");
+		add(moves_black);
+		
+		moves_red = new FlxText(FlxG.width - 40, 620, 40, "0");
+		moves_red.setFormat("assets/cheri.ttf", 32, FlxColor.BLACK, "center");
+		add(moves_red);
+		
+		//myText.setFormat("assets/font.ttf", 20, FlxColor.WHITE, "center");
+		
+		rules_timer = new FlxTimer(16.0, ChangeRules, 0);
 		
 		#if !debug
 		FlxG.sound.playMusic("assets/music/Spinning_Clocks-Silver_UFOs.mp3");
 		#end
 	}
+	
+	private var rules_timer : FlxTimer;
 	
 	override public function destroy():Void
 	{
@@ -153,38 +189,168 @@ class PlayState extends FlxNapeState
 			
 			if ( !c.legal )
 			{
-				dragged_piece.x = dragged_piece.prev_pos.x;
-				dragged_piece.y = dragged_piece.prev_pos.y;
-				dragged_piece.body.position.x = dragged_piece.x + 22;
-				dragged_piece.body.position.y = dragged_piece.y + 22;
+				dragged_piece.IllegalMove();
+				trace("illegal pos");
+			}
+			else
+			{
+				CheckKill( dragged_piece );
+				
 			}
 
-				dragged_piece.prev_pos.x = dragged_piece.x;
-				dragged_piece.prev_pos.y = dragged_piece.y;
-			dragged_piece.UpdateBoardPos();
+			dragged_piece.prev_pos.x = dragged_piece.x;
+			dragged_piece.prev_pos.y = dragged_piece.y;
+			dragged_piece.prev_pos_board_x = dragged_piece.pos_board_x;
+			dragged_piece.prev_pos_board_y = dragged_piece.pos_board_y;
 			
+			dragged_piece.UpdateBoardPos();
+			dragged_piece.CheckDamka();
+			
+			dragged_piece.body.setShapeFilters(new InteractionFilter(2, 2));
 			
 			trace("!! Mouse.released");
 			piece_mouse_joint.space = null;
 			piece_mouse_joint = null;
 			
+			moved_counts[ dragged_piece.player ] ++;
+			moves_black.text = moved_counts[0] + ""; 
+			moves_red.text = moved_counts[1] + ""; 
+			
 			dragged_piece = null;
+			
+		}
+	}
+	
+	public function CheckKill( p : Piece )
+	{
+		trace( "start " + p.prev_pos_board_x + ", " + p.prev_pos_board_y );
+		trace( "end " + p.pos_board_x + ", " + p.pos_board_y );
+		
+		var dir_x : Int = p.pos_board_x - p.prev_pos_board_x;
+		var dir_y : Int = p.pos_board_y - p.prev_pos_board_y;
+		
+		trace( " dir " + dir_x + ", " + dir_y );
+		
+		var long_move : Bool = Math.abs(dir_x) > 2 || Math.abs(dir_y) > 2;
+		
+		var diagonal_move : Bool = Math.abs(dir_x) == Math.abs(dir_y);
+		
+		if ( current_rule == 1) // now kills forward legal
+		{
+			if ( Math.abs( dir_x ) > Math.abs( dir_y ) )
+			{
+				p.IllegalMove();
+				trace("not sideways");
+				return;
+			}
+		}
+		else
+		{
+			if (!diagonal_move)
+			{
+				p.IllegalMove();
+				trace("not diagonal");
+				return;
+			}
+		}
+		
+		if ( (dir_x == 0 && dir_y == 0) || ( long_move && !p.is_damka) )
+		{
+			p.IllegalMove();
+			trace("illegal move");
+			return;
+		}
+		
+		
+		if (long_move)
+		{
 			
 			
 		}
+		else // pion
+		{
+			
+			var killing_move : Bool = Math.abs(dir_x) == 2 && Math.abs(dir_y) == 2;
+			
+			if (killing_move ) // length 2
+			{
+				var jumped_over_x : Int = p.pos_board_x - Std.int( dir_x / 2 );
+				var jumped_over_y : Int = p.pos_board_y - Std.int( dir_y / 2 );
+				
+				trace( "j " + jumped_over_x + ", " + jumped_over_y );
+				
+				if (jumped_over_x == p.pos_board_x && jumped_over_y == p.pos_board_y)
+				{
+					trace(" jumped over self ?");
+					return;
+				}
+				
+				var b : Array< Array<Checker> > = Reg.board.the;
+				
+				var e : Piece = Reg.board.GetPieceOnChecker( jumped_over_x, jumped_over_y);
+				
+				if (e != null)
+				{
+					trace("killed " + e );
+					e.kill();
+				}
+				else
+				{
+					trace("can move only by one field when not killing");
+					p.IllegalMove();
+					return;
+				}
+				
+			}
+			else // length 1
+			{
+				var e : Piece = Reg.board.IsOtherOnChecker( p.pos_board_x, p.pos_board_y, p);
+				if (e != null)
+				{
+					trace("checker holden");
+					p.IllegalMove();
+					return;
+				}	
+			}
+		}
+		
+		
+		/*var i_x = [ -1, 1 ];
+		var i_y = [ -1, 1 ];
+		for (x in i_x)
+		{
+			for (y in i_y)
+			{
+				var e : Piece = Reg.board.GetPieceOnChecker( p.pos_board_x + x, p.pos_board_y + y);
+		
+				if (e != null)
+				{
+					e.kill();
+				}
+			}
+		}*/
+		
 	}
 	
 	public function ChangeRules(Timer: FlxTimer) : Void
 	{
 		//trace("Rules have changed to...");
 		
-		var rules : Array<String> = [ "1111111111",  "2222222", "3333" ];
+		var rules : Array<String> = [ "Only move checkers back",  "move forward legal", "move opponents checker" ];
 		var rand : Int = FlxRandom.intRanged(0, 2);
+		current_rule = rand;
+		
+		text.text = rules[ current_rule ] ;
+		
+		FlxG.camera.flash();
 		
 		//trace( rules[ rand ] );
 		
-		
 	}
+	
+	public var current_rule : Int = -1;
+	
+	public var moved_counts = [ 0, 0 ];
 	
 	
 	override public function update():Void 
@@ -195,6 +361,16 @@ class PlayState extends FlxNapeState
 		
 		Reg.board.CheckPiecesPositions();
 		
+		if (FlxG.keys.justPressed.SPACE)
+		{
+			ChangeRules(rules_timer);
+			rules_timer.reset(16);
+		}
+		
+		if (FlxG.keys.pressed.R)
+		{
+			FlxG.resetState();
+		}
 		
 		#if debug
 			Debug();
@@ -206,7 +382,7 @@ class PlayState extends FlxNapeState
 	{
 		super.draw();
 		
-		Reg.board.draw();
+		//Reg.board.draw();
 	}
 	
 	
@@ -215,12 +391,7 @@ class PlayState extends FlxNapeState
 		
 		if (FlxG.keys.justPressed.SPACE)
 			trace( FlxG.mouse.getScreenPosition() );
-				
-				
-		if (FlxG.keys.pressed.R)
-		{
-			FlxG.resetState();
-		}
+		
 		
 	}
 
