@@ -28,9 +28,9 @@ class PlayState extends FlxNapeState
 		// call before setPiecesOnBoard
 		FlxG.plugins.add(new MouseEventManager());
 		
-		pieces_group = new FlxTypedGroup<Piece>();
+		Reg.pieces_group = new FlxTypedGroup<Piece>();
 		setPiecesOnBoard();
-		add(pieces_group);
+		add(Reg.pieces_group);
 
 		napeDebugEnabled = false;
 		createWalls();
@@ -53,7 +53,7 @@ class PlayState extends FlxNapeState
 		super.destroy();
 		
 		piece_mouse_joint = null;
-		pieces_group = null;
+		Reg.pieces_group = null;
 		//_fan = null;
 	}
 	
@@ -66,7 +66,8 @@ class PlayState extends FlxNapeState
 		var polish_offset_x : Int = 0;
 		var polish_offset_y : Int = -5;
 		
-				
+			
+		//AddPieceRow( 1, 0, Reg.board.GetPieceType(0) );
 		// black
 		
 		// first row
@@ -107,28 +108,69 @@ class PlayState extends FlxNapeState
 		var m : FlxPoint = c.getMidPoint();
 		
 		var p:Piece = new Piece( m.x , m.y , type);
-		p.pos_board.x = x ;
-		p.pos_board.y = y;
-		pieces_group.add(p);
+		p.pos_board_x = x ;
+		p.pos_board_y = y;
+		Reg.pieces_group.add(p);
+		
 	}
 	
+	static public var dragged_piece : Piece;
+	static public var drag_right : Bool; // true if started with right mosue button
+	
+	static public function mouse_any_just_released()
+	{
+		return FlxG.mouse.justReleased || FlxG.mouse.justReleasedRight;
+	}
+	
+	static public function mouse_any_just_pressed()
+	{
+		return FlxG.mouse.justPressed || FlxG.mouse.justPressedRight;
+	}
+	
+	//static public function mouse_any_()
+	//{
+		//return FlxG.mouse.justPressed || FlxG.mouse.justPressedRight;
+	//}
 	
 	public function UpdateMouseJoint():Void
 	{
 		if (piece_mouse_joint != null)
 		{
 			piece_mouse_joint.anchor1 = Vec2.weak(FlxG.mouse.x, FlxG.mouse.y);
+			//trace("dragging");
 		}
 				
-		if (FlxG.mouse.justReleased)
+		if (mouse_any_just_released())
 		{
 			if (piece_mouse_joint == null)
 			{
 				return;
 			}
 			
+			dragged_piece.UpdateBoardPos();
+			
+			var c : Checker = Reg.board.the[ dragged_piece.pos_board_x][dragged_piece.pos_board_y ];
+			
+			if ( !c.legal )
+			{
+				dragged_piece.x = dragged_piece.prev_pos.x;
+				dragged_piece.y = dragged_piece.prev_pos.y;
+				dragged_piece.body.position.x = dragged_piece.x + 22;
+				dragged_piece.body.position.y = dragged_piece.y + 22;
+			}
+
+				dragged_piece.prev_pos.x = dragged_piece.x;
+				dragged_piece.prev_pos.y = dragged_piece.y;
+			dragged_piece.UpdateBoardPos();
+			
+			
+			trace("!! Mouse.released");
 			piece_mouse_joint.space = null;
 			piece_mouse_joint = null;
+			
+			dragged_piece = null;
+			
+			
 		}
 	}
 	
@@ -151,7 +193,7 @@ class PlayState extends FlxNapeState
 		
 		UpdateMouseJoint();
 		
-		Reg.board.CheckPiecesPositions()
+		Reg.board.CheckPiecesPositions();
 		
 		
 		#if debug

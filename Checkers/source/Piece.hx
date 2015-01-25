@@ -18,10 +18,13 @@ class Piece extends FlxNapeSprite
 {
 	
 	// x and y for game pos are in FlxSprite
-	public var pos_board : FlxPoint = new FlxPoint(); // 0 based
-	
+	public var pos_board_x : Int; // 0 based
+	public var pos_board_y : Int;
 	
 	public var player : Int = 0;  // 0 for black, 1 for red
+	
+	public var dragged : Bool;
+	public var prev_pos : FlxPoint;
 	
 
 	public function new(X: Float, Y: Float, type : Int):Void
@@ -43,14 +46,20 @@ class Piece extends FlxNapeSprite
 		createCircularBody(18);
 		
 		// To make pieces don't interact with each other
-		//body.setShapeFilters(new InteractionFilter(2, ~2));
+		body.setShapeFilters(new InteractionFilter(2, 2));
 		
 		// Setup the mouse events
-		MouseEventManager.add(this, onDown, null, onMouseOver, onMouseOut);
+		MouseEventManager.add(this, StartDrag, null, onMouseOver, onMouseOut);
+		dragged = false;
+		prev_pos = new FlxPoint();
 	}
 	
-	private function onDown(Sprite:FlxSprite)
+	private function StartDrag(Sprite:FlxSprite)
 	{
+		prev_pos.x = x;
+		prev_pos.y = y;
+		trace("-- Start Drag");
+	
 		var body:Body = cast(Sprite, FlxNapeSprite).body;
 		
 		PlayState.piece_mouse_joint = new DistanceJoint(FlxNapeState.space.world, body, Vec2.weak(FlxG.mouse.x, FlxG.mouse.y), body.worldPointToLocal(Vec2.weak(FlxG.mouse.x, FlxG.mouse.y)), 0, 0);
@@ -58,6 +67,20 @@ class Piece extends FlxNapeSprite
 		PlayState.piece_mouse_joint.damping = 0.1;
 		PlayState.piece_mouse_joint.frequency = 5;
 		PlayState.piece_mouse_joint.space = FlxNapeState.space;
+		
+		PlayState.dragged_piece = this;
+		if (FlxG.mouse.justPressedRight)
+		{
+			PlayState.drag_right = true;
+			body.setShapeFilters(new InteractionFilter(2, 2));
+		}
+		else
+		{
+			PlayState.drag_right = false;
+			body.setShapeFilters(new InteractionFilter(2, ~2));
+		}
+		
+		Reg.pieces_group.PutOnTop( this );
 	}
 	
 	
@@ -69,6 +92,39 @@ class Piece extends FlxNapeSprite
 	private function onMouseOut(Sprite:FlxSprite)
 	{
 		color = 0xDFDFDF;
+	}
+	
+	override public function update():Void 
+	{
+		super.update();
+		
+		//if (FlxG.keys.justPressed.ENTER)			trace( pos_board );
+		
+		
+	}
+	
+	public function UpdateBoardPos()
+	{
+		var m : FlxPoint = getMidpoint();
+			
+		if (m.x < Board.board_physical_pos.x)
+			m.x = Board.board_physical_pos.x;
+			
+		if (m.x > Board.board_physical_pos.x + Board.board_physical_size_x())
+			m.x = Board.board_physical_pos.x + Board.board_physical_size_x() - 5;
+			
+		if (m.y < Board.board_physical_pos.y)
+			m.y = Board.board_physical_pos.y;
+			
+		if (m.y > Board.board_physical_pos.y + Board.board_physical_size_y())
+			m.y = Board.board_physical_pos.y + Board.board_physical_size_y() - 5;
+			
+		
+		var grid_x : Int = Std.int( (m.x - Board.board_physical_pos.x ) / Board.checker_physical_size );
+		var grid_y : Int = Std.int( (m.y - Board.board_physical_pos.y ) / Board.checker_physical_size );
+		
+		pos_board_x = grid_x;
+		pos_board_y = grid_y;
 	}
 	
 

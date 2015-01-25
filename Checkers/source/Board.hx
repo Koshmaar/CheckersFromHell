@@ -30,6 +30,10 @@ class Board
 	// board left top physical 
 	public static var board_physical_pos : FlxPoint = new FlxPoint(72, 86);
 	
+	public static function board_physical_size_x() : Int { return checkers_x * checker_physical_size; } 
+	
+	public static function board_physical_size_y() : Int { return checkers_y * checker_physical_size; } 
+	
 
 	public var the : Array< Array<Checker> >;
 	
@@ -74,10 +78,7 @@ class Board
 		{
 			var p : Piece = _p;
 			
-			var grid_x : Int = (p.x - board_physical_pos.x ) / checkers_x;
-			var grid_y : Int = (p.y - board_physical_pos.y ) / checkers_y;
-			
-			
+			p.UpdateBoardPos();
 			
 		}
 		
