@@ -40,6 +40,10 @@ Versions improved after jam:
 * can't kill own pieces
 * music shortened and compressed
 
+Version 1.2
+* pieces have small shadow, they appear to be higher when dragged
+
+
 ## TODO
 
 - implement queen and fix bug (long move only in 2 to 7 o clock direction)

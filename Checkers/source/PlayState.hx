@@ -65,11 +65,11 @@ class PlayState extends FlxNapeState
 		add(text);
 		
 		
-		moves_black = new FlxText(FlxG.width - 40, 90, 40, "0");
+		moves_black = new FlxText(FlxG.width - 50, 90, 60, "0");
 		moves_black.setFormat("assets/cheri.ttf", 32, FlxColor.BLACK, "center");
 		add(moves_black);
 		
-		moves_red = new FlxText(FlxG.width - 40, 620, 40, "0");
+		moves_red = new FlxText(FlxG.width - 50, 620, 60, "0");
 		moves_red.setFormat("assets/cheri.ttf", 32, FlxColor.BLACK, "center");
 		add(moves_red);
 		
@@ -78,7 +78,7 @@ class PlayState extends FlxNapeState
 		rules_timer = new FlxTimer(16.0, ChangeRules, 0);
 		
 		#if !debug
-		FlxG.sound.playMusic("assets/music/Spinning_Clocks-Silver_UFOs.mp3");
+		FlxG.sound.playMusic("assets/music/Spinning_Clocks-Silver_UFOs_compressed.mp3");
 		#end
 	}
 	
@@ -194,8 +194,10 @@ class PlayState extends FlxNapeState
 			}
 			else
 			{
-				CheckKill( dragged_piece );
-				
+				if (CheckKill( dragged_piece ))
+				{
+					moved_counts[ dragged_piece.player ] ++;
+				}
 			}
 
 			dragged_piece.prev_pos.x = dragged_piece.x;
@@ -212,16 +214,18 @@ class PlayState extends FlxNapeState
 			piece_mouse_joint.space = null;
 			piece_mouse_joint = null;
 			
-			moved_counts[ dragged_piece.player ] ++;
+			
 			moves_black.text = moved_counts[0] + ""; 
 			moves_red.text = moved_counts[1] + ""; 
+			
+			dragged_piece.MouseDragStop();
 			
 			dragged_piece = null;
 			
 		}
 	}
 	
-	public function CheckKill( p : Piece )
+	public function CheckKill( p : Piece ) : Bool
 	{
 		trace( "start " + p.prev_pos_board_x + ", " + p.prev_pos_board_y );
 		trace( "end " + p.pos_board_x + ", " + p.pos_board_y );
@@ -241,7 +245,7 @@ class PlayState extends FlxNapeState
 			{
 				p.IllegalMove();
 				trace("not sideways");
-				return;
+				return false;
 			}
 		}
 		else
@@ -250,15 +254,22 @@ class PlayState extends FlxNapeState
 			{
 				p.IllegalMove();
 				trace("not diagonal");
-				return;
+				return false;
 			}
 		}
 		
-		if ( (dir_x == 0 && dir_y == 0) || ( long_move && !p.is_damka) )
+		if (dir_x == 0 && dir_y == 0) 
+		{
+			// hack, but not so bad - this way this move won't be counted
+			moved_counts[ dragged_piece.player ] --;
+			return true;
+		}
+		
+		if ( long_move && !p.is_damka )
 		{
 			p.IllegalMove();
 			trace("illegal move");
-			return;
+			return false;
 		}
 		
 		
@@ -282,7 +293,7 @@ class PlayState extends FlxNapeState
 				if (jumped_over_x == p.pos_board_x && jumped_over_y == p.pos_board_y)
 				{
 					trace(" jumped over self ?");
-					return;
+					return false;
 				}
 				
 				var b : Array< Array<Checker> > = Reg.board.the;
@@ -291,6 +302,13 @@ class PlayState extends FlxNapeState
 				
 				if (e != null)
 				{
+					if (e.player == p.player)
+					{
+						trace("can't kill own pieces");
+						p.IllegalMove();
+						return false;
+					}
+					
 					trace("killed " + e );
 					e.kill();
 				}
@@ -298,7 +316,7 @@ class PlayState extends FlxNapeState
 				{
 					trace("can move only by one field when not killing");
 					p.IllegalMove();
-					return;
+					return false;
 				}
 				
 			}
@@ -309,7 +327,7 @@ class PlayState extends FlxNapeState
 				{
 					trace("checker holden");
 					p.IllegalMove();
-					return;
+					return false;
 				}	
 			}
 		}
@@ -330,6 +348,7 @@ class PlayState extends FlxNapeState
 			}
 		}*/
 		
+		return true;		
 	}
 	
 	public function ChangeRules(Timer: FlxTimer) : Void

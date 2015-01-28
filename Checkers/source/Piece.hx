@@ -30,15 +30,21 @@ class Piece extends FlxNapeSprite
 	public var prev_pos_board_x : Int;
 	public var prev_pos_board_y : Int;
 	
+	public var shadow : FlxSprite;
+	
 
 	public function new(X: Float, Y: Float, type : Int):Void
 	{
 		super(X , Y );
 		loadGraphic("assets/images/pieces.png", true, 44, 44);
-		
-		is_damka = false;
 		//animation.frameIndex = FlxRandom.intRanged(0, 6);
 		animation.frameIndex = type;
+		
+		shadow = new FlxSprite();
+		shadow.loadGraphic("assets/images/pieces.png", true, 44, 44);
+		shadow.animation.frameIndex = type;
+		shadow.color = 0x222222;
+		shadow.alpha = 0.35;
 		
 		if (type >= 4)
 			player = 1;
@@ -52,18 +58,24 @@ class Piece extends FlxNapeSprite
 		// To make pieces don't interact with each other
 		body.setShapeFilters(new InteractionFilter(2, 2));
 		
+		is_damka = false;
+		
 		// Setup the mouse events
-		MouseEventManager.add(this, StartDrag, null, onMouseOver, onMouseOut);
+		MouseEventManager.add(this, MouseDragStart, null, onMouseOver, onMouseOut);
 		dragged = false;
 		prev_pos = new FlxPoint();
 	}
 	
-	private function StartDrag(Sprite:FlxSprite)
+	private function MouseDragStart(Sprite:FlxSprite)
 	{
 		prev_pos.x = x;
 		prev_pos.y = y;
 		prev_pos_board_x = pos_board_x;
 		prev_pos_board_y = pos_board_y;
+		
+		scale.x = scale.y = 1.07;
+		shadow.scale.x = shadow.scale.y = 1.12;
+		
 		trace("");
 	
 		var body:Body = cast(Sprite, FlxNapeSprite).body;
@@ -89,6 +101,12 @@ class Piece extends FlxNapeSprite
 		Reg.pieces_group.PutOnTop( this );
 	}
 	
+	public function MouseDragStop()
+	{
+		scale.x = scale.y = 1.0;
+		shadow.scale.x = shadow.scale.y = 1.0;
+	}
+	
 	public function IllegalMove()
 	{
 		x = prev_pos.x;
@@ -98,7 +116,7 @@ class Piece extends FlxNapeSprite
 	}
 	
 	
-	private function onMouseOver(Sprite:FlxSprite) 
+	private function onMouseOver(Sprite:FlxSprite)
 	{
 		color = 0xFFFFFF;
 	}
@@ -108,7 +126,7 @@ class Piece extends FlxNapeSprite
 		color = 0xDFDFDF;
 	}
 	
-	override public function update():Void 
+	override public function update():Void
 	{
 		super.update();
 		
@@ -143,9 +161,28 @@ class Piece extends FlxNapeSprite
 		
 	}
 	
+	override public function draw()
+	{
+		if (dragged)
+		{
+			shadow.x = x + 5;
+			shadow.y = y + 3;
+		}
+		else
+		{
+			shadow.x = x + 3;
+			shadow.y = y + 2;
+		}
+		shadow.angle = angle;
+		shadow.draw();
+		
+		super.draw();
+		
+	}
+	
 	public function CheckDamka()
 	{
-		if (is_damka == false && ((player == 0 && pos_board_y == Board.checkers_y-1) || 
+		if (is_damka == false && ((player == 0 && pos_board_y == Board.checkers_y-1) ||
 			(player == 1 && pos_board_y == 0)) )
 		{
 			trace("promoted to damka");
@@ -159,7 +196,7 @@ class Piece extends FlxNapeSprite
 	}
 	
 
-	override public function destroy():Void 
+	override public function destroy():Void
 	{
 		// Make sure that this object is removed from the MouseEventManager for GC
 		MouseEventManager.remove(this);
