@@ -2,7 +2,11 @@
 
 How would you play a checkers game with a naughty sister who doesn't obey the rules? What would you do when she moves few pieces at a time? Or moves pieces backwards? Or moves... your pieces?! You can try to play by the original rules... or play by her rules! Enter this real time checkers simulation, with rules changing wildly every 16 seconds. Welcome to... Checkers from Hell ! 
 
+![](https://raw.githubusercontent.com/Koshmaar/SisterCheckers/master/screen.jpg)
+
 Hint: the game doesn't enforce the rules. Players have to cooperate to make it work... or don't cooperate for even more fun.
+
+**Browser playable link: http://hubert-rutkowski.pl/downloads/CheckersFromHell/index.html**
 
 GGJ project: http://globalgamejam.org/2015/games/checkers-hell
 
@@ -44,3 +48,7 @@ Versions improved after jam:
 - maybe menu, maybe short in-game explanation
 - more visual polish? and sounds?
 - test on android, add multitouch capabilities
+
+## License
+
+Attribution-Noncommercial-Share Alike 3.0 version of the Creative Commons License: http://creativecommons.org/licenses/by-nc-sa/3.0/
