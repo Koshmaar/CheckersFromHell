@@ -6,7 +6,7 @@ How would you play a checkers game with a naughty sister who doesn't obey the ru
 
 Hint: the game doesn't enforce the rules. Players have to cooperate to make it work... or don't cooperate for even more fun.
 
-**Browser playable link: http://hubert-rutkowski.pl/downloads/CheckersFromHell/index.html**
+**Browser playable link: http://hubert-rutkowski.pl/old/downloads/CheckersFromHell/index.html**
 
 GGJ project: http://globalgamejam.org/2015/games/checkers-hell
 
